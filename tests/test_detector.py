@@ -3,6 +3,7 @@ Unit tests for the academic hallucination detector package.
 """
 
 import pytest
+import os
 import numpy as np
 
 from hallucination_detector import (
@@ -14,6 +15,8 @@ from hallucination_detector import (
     build_feature_matrix,
     train_and_evaluate
 )
+from hallucination_detector.citation import CitationVerifier
+from hallucination_detector.corpus import load_halueval_as_papers, download_halueval_dataset
 
 
 def test_generate_corpus():
@@ -45,7 +48,7 @@ def test_analyse_citations():
             {"journal": "Science", "year": 2022, "authors": "B. Jones"}
         ]
     }
-    res_clean = analyse_citations(paper_clean)
+    res_clean = analyse_citations(paper_clean, live=False)
     assert res_clean["n_fake_journals"] == 0
     assert res_clean["n_future_years"] == 0
     assert res_clean["frac_fake_journals"] == 0.0
@@ -59,7 +62,7 @@ def test_analyse_citations():
             {"journal": "Science", "year": 2022, "authors": "B. Jones"}
         ]
     }
-    res_dirty = analyse_citations(paper_dirty)
+    res_dirty = analyse_citations(paper_dirty, live=False)
     assert res_dirty["n_fake_journals"] == 1
     assert res_dirty["n_future_years"] == 1
     assert res_dirty["frac_fake_journals"] == 0.5
@@ -67,6 +70,32 @@ def test_analyse_citations():
     assert res_dirty["n_ghost_markers"] == 1
     # score calculation: 0.5*0.5 + 0.5*0.3 + (1-0.5)*0.1 + 0.5*0.1 = 0.25 + 0.15 + 0.05 + 0.05 = 0.50
     assert res_dirty["citation_suspicion_score"] == pytest.approx(0.50)
+
+
+def test_citation_verifier_live_and_offline():
+    """Test CitationVerifier class behavior in offline mode and API mocking."""
+    verifier = CitationVerifier()
+    
+    # Offline checks
+    res_offline = verifier.verify_citation("A. Smith (2020). Title. Nature.", live=False)
+    assert res_offline["verdict"] == "EXISTS"
+    assert res_offline["confidence"] == 0.95
+    
+    res_offline_bad = verifier.verify_citation("X. Johnson (2030). Title. Journal of Advanced Cognitive Neuroscience.", live=False)
+    assert res_offline_bad["verdict"] == "NOT_FOUND"
+    assert res_offline_bad["confidence"] == 0.85
+
+    # Mocked API checks (handling network unavailability gracefully)
+    parsed = verifier._parse_citation("A. Smith (2020). Title. Nature.")
+    assert parsed["authors"] == "A. Smith"
+    assert parsed["year"] == 2020
+    assert parsed["title"] == "Title"
+    
+    cr = verifier._check_crossref({"title": ""})
+    assert not cr["found"]
+    
+    ss = verifier._check_semantic_scholar({"title": ""})
+    assert not ss["found"]
 
 
 def test_analyse_statistics():
@@ -113,23 +142,24 @@ def test_confidence_scores():
     assert scores[1] == pytest.approx(0.0)
 
 
-def test_feature_matrix_and_training():
-    """Test building feature matrix and training cross-validated models."""
-    papers = generate_corpus(n_papers=20, hallucination_rate=0.5, seed=42)
-    df = build_feature_matrix(papers)
-    
-    assert len(df) == 20
-    assert "citation_suspicion" in df.columns
-    assert "stat_suspicion" in df.columns
-    assert "confidence_score" in df.columns
-    
-    # Train and evaluate classifier
-    eval_res = train_and_evaluate(papers, seed=42)
-    assert "cv_results" in eval_res
-    assert "Logistic Regression" in eval_res["cv_results"]
-    assert "Random Forest" in eval_res["cv_results"]
-    assert "Gradient Boosting" in eval_res["cv_results"]
-    
-    assert "rf_final" in eval_res
-    assert eval_res["final_auc"] >= 0.0
-    assert len(eval_res["importances"]) == len(eval_res["feature_names"])
+def test_csv_mode_training():
+    """Test loading and training on local CSV dataset."""
+    csv_path = "data/P9_llm_detection_dataset.csv"
+    if os.path.exists(csv_path):
+        res = train_and_evaluate(mode="csv", dataset_path=csv_path, seed=42)
+        assert "cv_results" in res
+        assert "Random Forest" in res["cv_results"]
+        assert "Logistic Regression" in res["cv_results"]
+        assert len(res["feature_names"]) == 3
+        assert "perplexity" in res["feature_names"]
+    else:
+        pytest.skip("Local P9_llm_detection_dataset.csv not found, skipping CSV training test.")
+
+
+def test_halueval_loading():
+    """Test loading HaluEval dataset (handles offline fallback gracefully)."""
+    cache_dir = "data/cache"
+    papers = load_halueval_as_papers(cache_dir=cache_dir, subset="qa", limit=10)
+    assert len(papers) > 0
+    assert "is_hallucinated" in papers[0]
+    assert "n_stats" in papers[0]

@@ -1,55 +1,55 @@
 {
-  "corpus": {
-    "n_papers": 600,
-    "hallucination_rate": 0.45,
-    "n_hallucinated": 278
-  },
+  "mode": "online",
   "cv_results": {
     "Logistic Regression": {
-      "auc_mean": 0.9449221871878123,
-      "auc_std": 0.0124742340224019
+      "auc_mean": 1.0,
+      "auc_std": 0.0
     },
     "Random Forest": {
-      "auc_mean": 0.9417614885114884,
-      "auc_std": 0.010750897255399832
+      "auc_mean": 0.8333333333333334,
+      "auc_std": 0.23570226039551584
     },
     "Gradient Boosting": {
-      "auc_mean": 0.9384974712787212,
-      "auc_std": 0.00903781672861201
+      "auc_mean": 0.0,
+      "auc_std": 0.0
     }
   },
   "final_model": {
-    "auc": 0.9422061683801055,
-    "average_precision": 0.9536465339760053,
-    "f1_weighted": 0.8831384015594542,
-    "accuracy": 0.8833333333333333
-  },
-  "layer_aucs": {
-    "Citation forensics": 0.8568077215246436,
-    "Statistical forensics": 0.6891617141069752,
-    "Confidence mismatch": 0.691189284597167,
-    "Composite score": 0.8379842709683185,
-    "Random Forest (ML)": 0.995252245408642
+    "auc": 0.0,
+    "average_precision": 0.5,
+    "f1_weighted": 0.3333333333333333,
+    "accuracy": 0.5
   },
   "feature_importances": {
-    "n_citations": 0.035440814396919394,
-    "n_stats": 0.04130869777196062,
-    "frac_fake_journals": 0.10022624233024159,
-    "frac_future_years": 0.11647086257534699,
-    "n_ghost_markers": 0.1111029392426828,
-    "citation_suspicion": 0.21827624494439382,
-    "n_suspicious_stats": 0.11078474915611221,
-    "round_number_frac": 0.032294856723487184,
-    "stat_suspicion": 0.05322625084494821,
-    "confidence_score": 0.06291058088253612,
-    "high_conf_frac": 0.04211421844063457,
-    "conf_phrase_count": 0.07584354269073636
+    "n_citations": 0.03831417624521073,
+    "n_stats": 0.08045977011494253,
+    "frac_fake_journals": 0.034482758620689655,
+    "frac_future_years": 0.09195402298850573,
+    "n_ghost_markers": 0.13409961685823757,
+    "citation_suspicion": 0.11111111111111112,
+    "n_suspicious_stats": 0.04597701149425287,
+    "round_number_frac": 0.14942528735632185,
+    "stat_suspicion": 0.04597701149425287,
+    "confidence_score": 0.13793103448275862,
+    "high_conf_frac": 0.09195402298850575,
+    "conf_phrase_count": 0.038314176245210725
   },
   "top_features": [
-    "citation_suspicion",
-    "frac_future_years",
+    "round_number_frac",
+    "confidence_score",
     "n_ghost_markers",
-    "n_suspicious_stats",
-    "frac_fake_journals"
-  ]
+    "citation_suspicion",
+    "high_conf_frac"
+  ],
+  "layer_aucs": {
+    "Citation forensics": 0.7777777777777779,
+    "Statistical forensics": 0.888888888888889,
+    "Confidence mismatch": 0.7777777777777778,
+    "Composite score": 0.888888888888889,
+    "Random Forest (ML)": 0.888888888888889
+  },
+  "corpus": {
+    "n_papers": 6,
+    "n_hallucinated": 3
+  }
 }

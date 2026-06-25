@@ -49,3 +49,4 @@ env/
 figures/
 figures_p9/
 data/results.json
+data/cache/

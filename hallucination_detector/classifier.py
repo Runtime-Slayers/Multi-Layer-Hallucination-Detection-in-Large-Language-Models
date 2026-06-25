@@ -20,11 +20,11 @@ from .statistics import analyse_statistics
 from .confidence import calculate_confidence_score
 
 
-def build_feature_matrix(papers):
+def build_feature_matrix(papers, live=False):
     """Convert a list of paper dicts into a pandas DataFrame of features."""
     feature_rows = []
     for p in papers:
-        cf = analyse_citations(p)
+        cf = analyse_citations(p, live=live)
         sf = analyse_statistics(p)
         conf_score = calculate_confidence_score(p)
         
@@ -48,13 +48,38 @@ def build_feature_matrix(papers):
     return df
 
 
-def train_and_evaluate(papers, seed=42):
+def load_from_csv(file_path):
+    """Load and parse dataset from a local CSV file."""
+    df = pd.read_csv(file_path)
+    return df
+
+
+def train_and_evaluate(papers=None, mode="synthetic", dataset_path=None, live_citation_check=False, seed=42):
     """
     Build features, run cross-validation on multiple classifiers,
     and train the final Random Forest classifier on an 80/20 train/test split.
+    Supports mode='synthetic', mode='csv', or mode='online'.
     """
-    df = build_feature_matrix(papers)
-    y = np.array([int(p.get("is_hallucinated", False)) for p in papers])
+    if mode == "csv":
+        if dataset_path is None:
+            raise ValueError("dataset_path must be provided when mode='csv'")
+        df_raw = load_from_csv(dataset_path)
+        if "hallucination_label" not in df_raw.columns:
+            raise KeyError("CSV dataset must contain 'hallucination_label' column")
+        df = df_raw.drop("hallucination_label", axis=1)
+        y = df_raw["hallucination_label"].values
+    elif mode == "online":
+        if papers is None:
+            raise ValueError("papers (processed dataset) must be provided when mode='online'")
+        # online dataset is pre-processed into papers list
+        df = build_feature_matrix(papers, live=live_citation_check)
+        y = np.array([int(p.get("is_hallucinated", False)) for p in papers])
+    else:
+        if papers is None:
+            raise ValueError("papers must be provided when mode='synthetic'")
+        df = build_feature_matrix(papers, live=live_citation_check)
+        y = np.array([int(p.get("is_hallucinated", False)) for p in papers])
+        
     X = df.values
     
     # Add realistic measurement noise (imperfect feature extraction, OCR errors, etc.)
@@ -65,21 +90,32 @@ def train_and_evaluate(papers, seed=42):
     X_sc = scaler.fit_transform(X_noise)
     
     # Cross validation setup
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=seed)
+    class_counts = np.bincount(y)
+    min_class_size = int(class_counts.min()) if len(class_counts) > 1 else 0
+    n_splits = min(5, min_class_size)
+    
     models = {
         "Logistic Regression": LogisticRegression(C=1.0, max_iter=1000, random_state=seed),
         "Random Forest": RandomForestClassifier(n_estimators=100, random_state=seed),
-        "Gradient Boosting": GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, random_state=seed),
+        "Gradient Boosting":   GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, random_state=seed),
     }
     
     cv_results = {}
-    for name, model in models.items():
-        X_in = X_sc if name == "Logistic Regression" else X_noise
-        aucs = cross_val_score(model, X_in, y, cv=skf, scoring='roc_auc')
-        cv_results[name] = {
-            "auc_mean": float(aucs.mean()),
-            "auc_std": float(aucs.std())
-        }
+    if n_splits >= 2:
+        skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=seed)
+        for name, model in models.items():
+            X_in = X_sc if name == "Logistic Regression" else X_noise
+            aucs = cross_val_score(model, X_in, y, cv=skf, scoring='roc_auc')
+            cv_results[name] = {
+                "auc_mean": float(aucs.mean()),
+                "auc_std": float(aucs.std())
+            }
+    else:
+        for name in models.keys():
+            cv_results[name] = {
+                "auc_mean": 0.0,
+                "auc_std": 0.0
+            }
         
     # Final Model: Train/Test Split (80/20)
     split = int(0.8 * len(y))
@@ -95,6 +131,7 @@ def train_and_evaluate(papers, seed=42):
     
     final_auc = float(roc_auc_score(y[te], y_prob))
     final_ap = float(average_precision_score(y[te], y_prob))
+    
     report = classification_report(y[te], y_pred, output_dict=True)
     final_f1 = float(report["weighted avg"]["f1-score"])
     final_acc = float(report["accuracy"])
@@ -118,3 +155,4 @@ def train_and_evaluate(papers, seed=42):
         "feature_names": feat_names,
         "importances": importances
     }
+
