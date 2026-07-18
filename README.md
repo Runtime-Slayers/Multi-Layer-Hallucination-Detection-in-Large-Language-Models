@@ -20,8 +20,8 @@ graph TD
         N1["· Introduction"]
     end
     subgraph "Phase 3: Validation & Performance Evaluation"
-        N2["· Methods"]
-        N3["Synthetic Corpus"]
+        N2["Hallucinated text invents citations that violate real-world c"]
+        N3["Fabricated statistics cluster at psychologically round number"]
     end
     N0 --> N1
     N1 --> N2
