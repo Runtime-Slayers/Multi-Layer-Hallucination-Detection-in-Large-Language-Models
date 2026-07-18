@@ -9,23 +9,25 @@ This repository implements the research pipeline for the **REPORT P9: Multi-Laye
 
 ## 📊 Pipeline Architecture
 
-The flowchart below visualizes the code structure and processing sequence implemented in this project:
+The flowchart below visualizes the methodology, code modules, and logical execution sequence of the project:
 
 ```mermaid
 graph TD
-    subgraph "Data Synthesis"
-        A["Real Tabular Dataset Ingestion"] --> B["Gaussian Copula / GAN Pipeline"]
-        B --> C1["Empirical CDF Marginal Transformation"]
-        B --> C2["Correlation Matrix PSD Eigenvalue Correction"]
-        B --> C3["Multivariate Distribution Sampling"]
-        B --> C4["Inverse Transform to Original Marginals"]
+    subgraph "Phase 1: Environment & System Setup"
+        N0["Ingest & Parse: Multi-Layer AI Hallucination Detector for Academic Writing"]
     end
-    subgraph "Multi-Axis Evaluation"
-        C4 --> D["Generated Synthetic Database"]
-        D --> E1["Statistical Fidelity Check<br>JSD & Wasserstein-1 Distances"]
-        D --> E2["Privacy Leakage Audit<br>NNDR & Membership Inference"]
-        D --> E3["ML Utility Evaluation<br>TSTR vs TRTR Model Comparison"]
+    subgraph "Phase 2: Signal & Core Processing"
+        N1["· Introduction"]
     end
+    subgraph "Phase 3: Validation & Performance Evaluation"
+        N2["· Methods"]
+        N3["Synthetic Corpus"]
+    end
+    N0 --> N1
+    N1 --> N2
+    N2 --> N3
+    N1 -->|"Secondary Analysis Path"| N_branchA["Secondary Parallel Process"]
+    N_branchA --> N3
 ```
 
 ---
