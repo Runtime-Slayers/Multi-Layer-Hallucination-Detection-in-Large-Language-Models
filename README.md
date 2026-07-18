@@ -14,17 +14,17 @@ The flowchart below visualizes the methodology and execution sequence implemente
 ```mermaid
 graph TD
     subgraph Data Synthesis
-        A[Real Tabular Dataset Ingestion] --> B[Gaussian Copula / GAN Pipeline]
-        B --> C1[Empirical CDF Marginal Transformation]
-        B --> C2[Correlation Matrix PSD Eigenvalue Correction]
-        B --> C3[Multivariate Distribution Sampling]
-        B --> C4[Inverse Transform to Original Marginals]
+        A["Real Tabular Dataset Ingestion"] --> B["Gaussian Copula / GAN Pipeline"]
+        B --> C1["Empirical CDF Marginal Transformation"]
+        B --> C2["Correlation Matrix PSD Eigenvalue Correction"]
+        B --> C3["Multivariate Distribution Sampling"]
+        B --> C4["Inverse Transform to Original Marginals"]
     end
     subgraph Multi-Axis Evaluation
-        C4 --> D[Generated Synthetic Database]
-        D --> E1[Statistical Fidelity Check<br>JSD & Wasserstein-1 Distances]
-        D --> E2[Privacy Leakage Audit<br>NNDR & Membership Inference]
-        D --> E3[ML Utility Evaluation<br>TSTR vs TRTR Model Comparison]
+        C4 --> D["Generated Synthetic Database"]
+        D --> E1["Statistical Fidelity Check<br>JSD & Wasserstein-1 Distances"]
+        D --> E2["Privacy Leakage Audit<br>NNDR & Membership Inference"]
+        D --> E3["ML Utility Evaluation<br>TSTR vs TRTR Model Comparison"]
     end
 ```
 
@@ -69,7 +69,6 @@ The project directory consists of the following core structures:
   - `.github`
   - `data`
   - `paper.pdf` — Compiled research manuscript
-  - `REPORT.md` — Detailed preprint report
   - `README.md` — Project documentation and setup guide
 
 ---
